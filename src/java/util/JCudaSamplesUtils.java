@@ -1,4 +1,4 @@
-/*
+package util;/*
  * JCuda - Java bindings for NVIDIA CUDA
  *
  * Copyright 2008-2016 Marco Hutter - http://www.jcuda.org

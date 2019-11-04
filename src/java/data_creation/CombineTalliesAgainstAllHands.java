@@ -1,17 +1,22 @@
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+package data_creation;
+
+import data_creation.structures.HoleCards;
+import data_creation.structures.HoleCardsTwoPlayers;
+import data_creation.structures.OutcomeTallies;
+
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-public class ComputeEquities {
+public class CombineTalliesAgainstAllHands {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        String holeCardTalliesMapFile = "holeCardComboTallies.dat";
-
 //      Load the data file.
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream(holeCardTalliesMapFile));
+        String holeCardTalliesMapFile = "holeCardComboTallies.dat";
+        ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(holeCardTalliesMapFile)));
         Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies = (Map<HoleCardsTwoPlayers, OutcomeTallies>) in.readObject();
         in.close();
 
@@ -27,13 +32,11 @@ public class ComputeEquities {
             holeCardTallies.get(combo.getMainPlayerCards()).addTallies(curTallies);
         }
 
-//      Print the hole card equities against a random hand.
-        for (Map.Entry<HoleCards, OutcomeTallies> entry : holeCardTallies.entrySet()) {
-            OutcomeTallies tallies = entry.getValue();
-            double total = tallies.getWins() + tallies.getLosses() + tallies.getTies();
-            double equity = (tallies.getWins() + tallies.getTies()/2f) / total * 100;
-
-            System.out.println(entry.getKey() + " : " + equity);
-        }
+//      Output a map of the tallies for each hole card combo against all hands.
+        String holeCardTalliesFile = "holeCardTallies.dat";
+        ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(holeCardTalliesFile)));
+        out.writeObject(holeCardTallies);
+        out.flush();
+        out.close();
     }
 }

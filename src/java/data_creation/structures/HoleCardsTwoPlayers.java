@@ -1,3 +1,5 @@
+package data_creation.structures;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -6,9 +8,13 @@ public final class HoleCardsTwoPlayers implements Serializable {
     private HoleCards otherPlayerCards;
     private int uniqueId;
 
-    public HoleCardsTwoPlayers(HoleCards mainPlayerCards, HoleCards otherPlayerCards, int uniqueId) {
+    public HoleCardsTwoPlayers(HoleCards mainPlayerCards, HoleCards otherPlayerCards) {
         this.mainPlayerCards = mainPlayerCards;
         this.otherPlayerCards = otherPlayerCards;
+    }
+
+    public HoleCardsTwoPlayers(HoleCards mainPlayerCards, HoleCards otherPlayerCards, int uniqueId) {
+        this(mainPlayerCards, otherPlayerCards);
         this.uniqueId = uniqueId;
     }
 

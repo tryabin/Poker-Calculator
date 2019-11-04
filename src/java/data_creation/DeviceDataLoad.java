@@ -1,3 +1,6 @@
+package data_creation;
+
+import data_creation.structures.HoleCardsTwoPlayers;
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.CUdeviceptr;

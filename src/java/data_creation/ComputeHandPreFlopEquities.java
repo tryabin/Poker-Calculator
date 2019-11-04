@@ -1,6 +1,11 @@
+package data_creation;
+
+import data_creation.structures.HoleCardsTwoPlayers;
+import data_creation.structures.OutcomeTallies;
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.*;
+import util.JCudaSamplesUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,6 +13,7 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import static jcuda.driver.JCudaDriver.*;
 import static jcuda.runtime.JCuda.cudaDeviceSetCacheConfig;
@@ -84,7 +90,7 @@ public class ComputeHandPreFlopEquities {
 //      Call the kernel function.
         long startTime = System.nanoTime();
 
-        int numberOfThreadsPerBlock = 256;
+        int numberOfThreadsPerBlock = 512;
         int numberOfBlocks = (int)Math.ceil((double)comboList.size() / numberOfThreadsPerBlock);
         int sharedMemorySize = 0;
         cuLaunchKernel(function,
@@ -118,7 +124,7 @@ public class ComputeHandPreFlopEquities {
 
 //      Output the map to a file.
         String holeCardTalliesMapFile = "holeCardComboTallies.dat";
-        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(holeCardTalliesMapFile));
+        ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(holeCardTalliesMapFile)));
         out.writeObject(holeCardComboTallies);
         out.flush();
         out.close();

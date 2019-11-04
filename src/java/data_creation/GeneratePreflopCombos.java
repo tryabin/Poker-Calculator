@@ -1,3 +1,7 @@
+package data_creation;
+
+import data_creation.structures.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
