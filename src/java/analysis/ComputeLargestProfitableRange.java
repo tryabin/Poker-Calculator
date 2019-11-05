@@ -8,24 +8,17 @@ import java.io.ObjectInputStream;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
+import static analysis.ComputeWinPercentageAgainstBestRange.computeWinPercentageAgainstBestRange;
 import static util.EquityCalculationFunctions.*;
 
 
 public class ComputeLargestProfitableRange {
 
-    enum Position {
-        SB, BB;
-    }
-
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
 //      Parameters
-        HoleCards holeCards = new HoleCards(new Card(Rank.TEN, Suit.CLUBS), new Card(Rank.KING, Suit.CLUBS));
-//        HoleCards holeCards = new HoleCards(new Card(Rank.ACE, Suit.CLUBS), new Card(Rank.ACE, Suit.SPADES));
-
-        double startingStackBB = 10;
-        double startingStackOpponentBB = 10;
-        double allInPot = startingStackBB < startingStackOpponentBB ? 2*startingStackBB : 2*startingStackOpponentBB;
+        double startingStackBB = 50;
+        double startingStackOpponentBB = 50;
         Position playerPosition = Position.SB;
 
 
@@ -40,38 +33,32 @@ public class ComputeLargestProfitableRange {
         Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies = (Map<HoleCardsTwoPlayers, OutcomeTallies>) in.readObject();
         in.close();
 
-//      Sort the tallies against random hands.
+//      Sort the hole card tallies map based on the equity of the hole cards against a random hand.
         holeCardTallies = sortByValue(holeCardTallies);
-        Map<HoleCards, Integer> sortedHoleCardIndices = new HashMap<>();
-        int holeCardIndex = 0;
-        for (Map.Entry<HoleCards, OutcomeTallies> entry : holeCardTallies.entrySet()) {
-            sortedHoleCardIndices.put(entry.getKey(), holeCardIndex);
-            holeCardIndex++;
-        }
 
 
-//      Find the best range against the hole cards, taking the stack sizes into account.
-        int indexOfBestRange = 0;
-        double winPercentageAgainstBestRange = 1;
-        int totalNumberOfHandsAgainstHoleCards = getTotalNumberOfHands(holeCardComboTallies, holeCardTallies, holeCards);
-        for (int i = 0; i < holeCardTallies.size(); i++) {
-            HoleCardsVersusRangeResult result = getEquityOfHoleCardsVersusRange(holeCardComboTallies, holeCardTallies, i, holeCards);
-            double equityAgainstRange = result.getEquity()/100;
-            double callPercentage = result.getNumberOfHandsInRange() / (double)totalNumberOfHandsAgainstHoleCards;
+//      Find the the worst hand that you can go all-in on that would still increase your chances of winning.
+        double minWinPercentageIncrease = Double.POSITIVE_INFINITY;
+        HoleCards worstHandWhereWinPercentageIncreases = null;
+        for (HoleCards holeCards : holeCardTallies.keySet()) {
 
-            double winPercentage = 1;
-            double stackAfterAllIn = startingStackBB - allInPot/2;
-            double blindWonIfOpponentFolds = playerPosition == Position.SB ? 1 : .5;
-            double averageStackAfterHand = stackAfterAllIn + allInPot*equityAgainstRange*callPercentage + (1 - callPercentage)*(blindWonIfOpponentFolds + allInPot/2);
-            double averageOpponentStackAfterHand = startingStackOpponentBB - (averageStackAfterHand - startingStackBB);
-            winPercentage = averageStackAfterHand/(averageStackAfterHand + averageOpponentStackAfterHand);
+//          Find the best range against the current hole cards, taking the stack sizes into account.
+            ComputeWinPercentageAgainstBestRangeResult result = computeWinPercentageAgainstBestRange(holeCards, startingStackBB, startingStackOpponentBB, playerPosition, holeCardTallies, holeCardComboTallies);
 
-            if (winPercentage < winPercentageAgainstBestRange) {
-                winPercentageAgainstBestRange = winPercentage;
-                indexOfBestRange = i;
+            double winPercentageAgainstBestRange = result.getWinPercentage();
+            double blindLostIfYouFold = playerPosition == Position.SB ? .5 : 1;
+            double winPercentageIncrease = winPercentageAgainstBestRange - (startingStackBB-blindLostIfYouFold)/(startingStackBB + startingStackOpponentBB);
+            if (winPercentageIncrease > 0 && winPercentageIncrease < minWinPercentageIncrease) {
+                minWinPercentageIncrease = winPercentageIncrease;
+                worstHandWhereWinPercentageIncreases = holeCards;
             }
         }
 
-        System.out.println("Best range against " + holeCards + " starts at " + new ArrayList<>(holeCardTallies.keySet()).get(indexOfBestRange) + ", win % against that range = " + winPercentageAgainstBestRange);
+        if (worstHandWhereWinPercentageIncreases == null) {
+            System.out.println("There is no hand where it's ok to go all-in in the " + playerPosition + " position when your stack is " + startingStackBB + " and your opponent's stack is " + startingStackOpponentBB + ".");
+        }
+        else {
+            System.out.println("Worst hand where it's ok to go all-in in the " + playerPosition + " position when your stack is " + startingStackBB + " and your opponent's stack is " + startingStackOpponentBB + " = " + worstHandWhereWinPercentageIncreases);
+        }
     }
 }
