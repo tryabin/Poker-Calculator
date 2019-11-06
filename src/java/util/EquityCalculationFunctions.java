@@ -10,20 +10,16 @@ import java.util.Map;
 public class EquityCalculationFunctions {
 
     public static HoleCardsVersusRangeResult getEquityOfHoleCardsVersusRange(Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies,
-                                                                             Map<HoleCards, OutcomeTallies> holeCardTallies,
-                                                                             int indexOfRange,
+                                                                             List<HoleCards> range,
                                                                              HoleCards holeCards) {
-
-        List<HoleCards> holeCardsList = new ArrayList<>(holeCardTallies.keySet());
-        OutcomeTallies tallies = new OutcomeTallies();
 
 //      Convert the hole cards to the version used in generating the combos.
         holeCards = convertHoleCardsToKeyVersion(holeCards);
 
 //      Add up the tallies of the results between the given hole cards and every hand in the given range.
         int numberOfHandsInRange = 0;
-        for (int i = indexOfRange; i < holeCardsList.size(); i++) {
-            HoleCards baseRangeCards = holeCardsList.get(i);
+        OutcomeTallies tallies = new OutcomeTallies();
+        for (HoleCards baseRangeCards : range) {
             HoleCardsType curRangeCardsType = baseRangeCards.getType();
 
 //          Generate variations of the current base range cards and add the tallies for the combos between the hole cards
@@ -67,9 +63,9 @@ public class EquityCalculationFunctions {
 
 
     public static int getTotalNumberOfHands(Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies,
-                                            Map<HoleCards, OutcomeTallies> holeCardTallies,
+                                            List<HoleCards> holeCardsAgainstRandomHand,
                                             HoleCards holeCards) {
-        return getEquityOfHoleCardsVersusRange(holeCardComboTallies, holeCardTallies, 0, holeCards).getNumberOfHandsInRange();
+        return getEquityOfHoleCardsVersusRange(holeCardComboTallies, holeCardsAgainstRandomHand, holeCards).getNumberOfHandsInRange();
     }
 
 

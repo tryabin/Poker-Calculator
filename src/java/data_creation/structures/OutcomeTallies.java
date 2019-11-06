@@ -59,7 +59,7 @@ public final class OutcomeTallies implements Serializable, Comparable<OutcomeTal
         BigDecimal total = new BigDecimal(wins + losses + ties);
         BigDecimal w = new BigDecimal(wins);
         BigDecimal b = new BigDecimal(ties).divide(new BigDecimal(2), numberOfDecimalPlaces, RoundingMode.UP);
-        BigDecimal equity = w.add(b).divide(total, numberOfDecimalPlaces, RoundingMode.UP).multiply(new BigDecimal(100));
+        BigDecimal equity = w.add(b).divide(total, numberOfDecimalPlaces, RoundingMode.UP);
         return equity.doubleValue();
     }
 

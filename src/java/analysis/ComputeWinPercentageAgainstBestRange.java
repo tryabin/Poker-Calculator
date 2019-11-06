@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -37,8 +38,9 @@ public class ComputeWinPercentageAgainstBestRange {
 //      Sort the hole card tallies map based on the equity of the hole cards against a random hand.
         holeCardTallies = sortByValue(holeCardTallies);
 
-        ComputeWinPercentageAgainstBestRangeResult result = computeWinPercentageAgainstBestRange(holeCards, startingStackBB, startingStackOpponentBB, playerPosition, holeCardTallies, holeCardComboTallies);
-        System.out.println("Best range against " + holeCards + " with a starting stack of " + startingStackBB + " BB and an opponent stack of " + startingStackOpponentBB + " BB starts at " + result.getLowestCardsInBestRange() + ".");
+        List<HoleCards> holeCardsAgainstRandomHand = new ArrayList<>(holeCardTallies.keySet());
+        ComputeWinPercentageAgainstBestRangeResult result = computeWinPercentageAgainstBestRange(holeCards, startingStackBB, startingStackOpponentBB, playerPosition, holeCardsAgainstRandomHand, holeCardComboTallies);
+        System.out.println("Best range against " + holeCards + " with a starting stack of " + startingStackBB + " BB and an opponent stack of " + startingStackOpponentBB + " BB starts at " + result.getRange().get(0) + ".");
         System.out.println("Win percentage against that range = " + result.getWinPercentage());
     }
 
@@ -47,31 +49,41 @@ public class ComputeWinPercentageAgainstBestRange {
                                                                                                   double startingStackBB,
                                                                                                   double startingStackOpponentBB,
                                                                                                   Position playerPosition,
-                                                                                                  Map<HoleCards, OutcomeTallies> holeCardTallies,
+                                                                                                  List<HoleCards> holeCardsAgainstRandomHand,
                                                                                                   Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies) {
-
-        double allInPot = startingStackBB < startingStackOpponentBB ? 2*startingStackBB : 2*startingStackOpponentBB;
 
         int indexOfBestRange = 0;
         double winPercentageAgainstBestRange = 1;
-        int totalNumberOfHandsAgainstHoleCards = getTotalNumberOfHands(holeCardComboTallies, holeCardTallies, holeCards);
-        for (int j = 0; j < holeCardTallies.size(); j++) {
-            HoleCardsVersusRangeResult result = getEquityOfHoleCardsVersusRange(holeCardComboTallies, holeCardTallies, j, holeCards);
-            double equityAgainstRange = result.getEquity()/100;
-            double callPercentage = result.getNumberOfHandsInRange()/(double) totalNumberOfHandsAgainstHoleCards;
-
-            double stackAfterAllIn = startingStackBB - allInPot/2;
-            double blindWonIfOpponentFolds = playerPosition == Position.SB ? 1 : .5;
-            double averageStackAfterHand = stackAfterAllIn + allInPot*equityAgainstRange*callPercentage + (1 - callPercentage)*(blindWonIfOpponentFolds + allInPot/2);
-            double averageOpponentStackAfterHand = startingStackOpponentBB - (averageStackAfterHand - startingStackBB);
-            double winPercentage = averageStackAfterHand/(averageStackAfterHand + averageOpponentStackAfterHand);
+        int totalNumberOfHandsAgainstHoleCards = getTotalNumberOfHands(holeCardComboTallies, holeCardsAgainstRandomHand, holeCards);
+        for (int i = 0; i < holeCardsAgainstRandomHand.size(); i++) {
+            HoleCardsVersusRangeResult result = getEquityOfHoleCardsVersusRange(holeCardComboTallies, holeCardsAgainstRandomHand.subList(i, holeCardsAgainstRandomHand.size()), holeCards);
+            double winPercentage = computeWinPercentageFromHoleCardsVersusRangeResult(startingStackBB, startingStackOpponentBB, playerPosition, totalNumberOfHandsAgainstHoleCards, result);
 
             if (winPercentage < winPercentageAgainstBestRange) {
                 winPercentageAgainstBestRange = winPercentage;
-                indexOfBestRange = j;
+                indexOfBestRange = i;
             }
         }
 
-        return new ComputeWinPercentageAgainstBestRangeResult(winPercentageAgainstBestRange, new ArrayList<>(holeCardTallies.keySet()).get(indexOfBestRange));
+        return new ComputeWinPercentageAgainstBestRangeResult(winPercentageAgainstBestRange, holeCardsAgainstRandomHand.subList(indexOfBestRange, holeCardsAgainstRandomHand.size()));
+    }
+
+
+    public static double computeWinPercentageFromHoleCardsVersusRangeResult(double startingStackBB,
+                                                                            double startingStackOpponentBB,
+                                                                            Position playerPosition,
+                                                                            double totalNumberOfHandsAgainstHoleCards,
+                                                                            HoleCardsVersusRangeResult result) {
+
+        double allInPot = startingStackBB < startingStackOpponentBB ? 2*startingStackBB : 2*startingStackOpponentBB;
+        double stackAfterAllIn = startingStackBB - allInPot/2;
+        double blindWonIfOpponentFolds = playerPosition == Position.SB ? 1 : .5;
+
+        double equityAgainstRange = result.getEquity();
+        double callPercentage = result.getNumberOfHandsInRange()/totalNumberOfHandsAgainstHoleCards;
+        double averageStackAfterHand = stackAfterAllIn + allInPot*equityAgainstRange*callPercentage + (1 - callPercentage)*(blindWonIfOpponentFolds + allInPot/2);
+        double averageOpponentStackAfterHand = startingStackOpponentBB - (averageStackAfterHand - startingStackBB);
+
+        return averageStackAfterHand/(averageStackAfterHand + averageOpponentStackAfterHand);
     }
 }
