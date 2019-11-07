@@ -14,6 +14,8 @@ public class ConvertTableData {
         UNSIGNED_INT
     }
 
+    // Load text files containing array data of various types into Java arrays, then serialize
+    // the Java arrays into .dat files.
     public static void main(String[] args) throws IOException {
 
         File folder = new File("src/resources");
@@ -26,6 +28,7 @@ public class ConvertTableData {
                 entry("suitbit_by_id_data.txt", DataType.SHORT),
                 entry("suits_data.txt", DataType.CHAR)
         );
+
 
         for (Map.Entry<String, DataType> entry : dataFiles.entrySet()) {
 
@@ -50,6 +53,7 @@ public class ConvertTableData {
             String newDataFileName = dataFile.getName().split("\\.")[0] + ".dat";
             ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("src/resources/" + newDataFileName));
 
+            // char data
             if (entry.getValue() == DataType.CHAR) {
                 byte[] data = new byte[dataParts.length]; // chars are 2 bytes in Java, but 1 byte in CUDA, so we load the data as bytes.
                 for (int i = 0; i < dataParts.length; i++) {
@@ -57,6 +61,8 @@ public class ConvertTableData {
                 }
                 out.writeObject(data);
             }
+
+            // short data
             if (entry.getValue() == DataType.SHORT) {
                 short[] data = new short[dataParts.length];
                 for (int i = 0; i < dataParts.length; i++) {
@@ -69,6 +75,8 @@ public class ConvertTableData {
                 }
                 out.writeObject(data);
             }
+
+            // int data
             if (entry.getValue() == DataType.INT) {
                 int[] data = new int[dataParts.length];
                 for (int i = 0; i < dataParts.length; i++) {
@@ -76,6 +84,8 @@ public class ConvertTableData {
                 }
                 out.writeObject(data);
             }
+
+            // unsigned int data
             if (entry.getValue() == DataType.UNSIGNED_INT) {
                 byte[] data = new byte[dataParts.length*Integer.BYTES];
                 for (int i = 0; i < dataParts.length; i++) {
@@ -94,7 +104,7 @@ public class ConvertTableData {
     }
 
 
-    public static byte[] longToBytes(long l) {
+    private static byte[] longToBytes(long l) {
         byte[] result = new byte[8];
         for (int i = 7; i >= 0; i--) {
             result[i] = (byte)(l & 0xFF);

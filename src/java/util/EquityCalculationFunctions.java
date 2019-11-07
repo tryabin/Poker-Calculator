@@ -1,5 +1,7 @@
 package util;
 
+import analysis.structures.HoleCardsVersusRangeResult;
+import analysis.structures.Position;
 import data_creation.structures.*;
 
 import java.util.ArrayList;
@@ -13,39 +15,39 @@ public class EquityCalculationFunctions {
                                                                              List<HoleCards> range,
                                                                              HoleCards holeCards) {
 
-//      Convert the hole cards to the version used in generating the combos.
+        // Convert the hole cards to the version used in generating the combos.
         holeCards = convertHoleCardsToKeyVersion(holeCards);
 
-//      Add up the tallies of the results between the given hole cards and every hand in the given range.
+        // Add up the tallies of the results between the given hole cards and every hand in the given range.
         int numberOfHandsInRange = 0;
         OutcomeTallies tallies = new OutcomeTallies();
         for (HoleCards baseRangeCards : range) {
             HoleCardsType curRangeCardsType = baseRangeCards.getType();
 
-//          Generate variations of the current base range cards and add the tallies for the combos between the hole cards
-//          and those variations.
+            // Generate variations of the current base range cards and add the tallies for the combos between the hole cards
+            // and those variations.
             for (Suit suit1 : Suit.values()) {
                 for (Suit suit2 : Suit.values()) {
                     Card rangeCard1 = new Card(baseRangeCards.getCard1().getRank(), suit1);
                     Card rangeCard2 = new Card(baseRangeCards.getCard2().getRank(), suit2);
                     HoleCards curRangeCardsVariation = new HoleCards(rangeCard1, rangeCard2);
 
-//                  Skip if any of the cards in the variation equal one of the hole cards.
+                    // Skip if any of the cards in the variation equal one of the hole cards.
                     if (holeCards.anyCardsEqual(curRangeCardsVariation)) {
                         continue;
                     }
 
-//                  Case when the base range cards are offsuit.
+                    // Case when the base range cards are offsuit.
                     if (curRangeCardsType == HoleCardsType.OFFSUIT && suit1 == suit2) {
                         continue;
                     }
 
-//                  Case when the base range cards are suited.
+                    // Case when the base range cards are suited.
                     if (curRangeCardsType == HoleCardsType.SUITED && suit1 != suit2) {
                         continue;
                     }
 
-//                  Case when the base range cards are pairs. The suit of the second card should always be greater.
+                    // Case when the base range cards are pairs. The suit of the second card should always be greater.
                     if (curRangeCardsType == HoleCardsType.PAIR && suit1.ordinal() >= suit2.ordinal()) {
                         continue;
                     }
@@ -71,8 +73,8 @@ public class EquityCalculationFunctions {
 
     private static HoleCards convertHoleCardsToKeyVersion(HoleCards holeCards) {
 
-//      Make sure the rank of the first card is less than or equal to the rank of the second card, because that is how
-//      the combos were generated.
+        // Make sure the rank of the first card is less than or equal to the rank of the second card, because that is how
+        // the combos were generated.
         Rank firstCardRank = holeCards.getCard1().getRank();
         Rank secondCardRank = holeCards.getCard2().getRank();
         if (firstCardRank.ordinal() > secondCardRank.ordinal()) {
@@ -80,9 +82,9 @@ public class EquityCalculationFunctions {
             secondCardRank = holeCards.getCard1().getRank();
         }
 
-//      Convert the given hole cards into a version of the hole cards that was used to compute the hole card combo tallies.
-//      Default is that the first card is the lowest rank, and is clubs, while the second card is clubs for suited hands,
-//      and diamonds for offsuit hands.
+        // Convert the given hole cards into a version of the hole cards that was used to compute the hole card combo tallies.
+        // Default is that the first card is the lowest rank, and is clubs, while the second card is clubs for suited hands,
+        // and diamonds for offsuit hands.
         if (holeCards.getType() == HoleCardsType.PAIR || holeCards.getType() == HoleCardsType.OFFSUIT) {
             return new HoleCards(new Card(firstCardRank, Suit.CLUBS), new Card(secondCardRank, Suit.DIAMONDS));
         }
@@ -102,5 +104,24 @@ public class EquityCalculationFunctions {
         }
 
         return result;
+    }
+
+
+    public static double computeWinPercentageFromHoleCardsVersusRangeResult(double startingStackBB,
+                                                                            double startingStackOpponentBB,
+                                                                            Position playerPosition,
+                                                                            double totalNumberOfHandsAgainstHoleCards,
+                                                                            HoleCardsVersusRangeResult result) {
+
+        double allInPot = startingStackBB < startingStackOpponentBB ? 2*startingStackBB : 2*startingStackOpponentBB;
+        double stackAfterAllIn = startingStackBB - allInPot/2;
+        double blindWonIfOpponentFolds = playerPosition == Position.SB ? 1 : .5;
+
+        double equityAgainstRange = result.getEquity();
+        double callPercentage = result.getNumberOfHandsInRange()/totalNumberOfHandsAgainstHoleCards;
+        double averageStackAfterHand = stackAfterAllIn + allInPot*equityAgainstRange*callPercentage + (1 - callPercentage)*(blindWonIfOpponentFolds + allInPot/2);
+        double averageOpponentStackAfterHand = startingStackOpponentBB - (averageStackAfterHand - startingStackBB);
+
+        return averageStackAfterHand/(averageStackAfterHand + averageOpponentStackAfterHand);
     }
 }

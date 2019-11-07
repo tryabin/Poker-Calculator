@@ -10,7 +10,7 @@ public class GeneratePreflopCombos {
 
     public static List<HoleCardsTwoPlayers> generateHoleCardCombos() {
 
-//      Generate the different types of combos.
+        // Generate the different types of combos.
         List<HoleCardsTwoPlayers> comboList = new ArrayList<>();
         int uniqueId = addSuitedCombos(comboList, 0);
         addOffSuitCombos(comboList, uniqueId);
@@ -29,11 +29,11 @@ public class GeneratePreflopCombos {
                 Card mainPlayerCard2 = new Card(ranks[rank2], Suit.CLUBS);
                 HoleCards mainPlayerCards = new HoleCards(mainPlayerCard1, mainPlayerCard2);
 
-//              Generate the hole cards of the other player.
+                // Generate the hole cards of the other player.
                 for (int otherCard1 = 0; otherCard1 < 52; otherCard1++) {
                     for (int otherCard2 = otherCard1+1; otherCard2 < 52; otherCard2++) {
 
-//                      Skip if any of the other player's cards are identical to one of main player's cards.
+                        // Skip if any of the other player's cards are identical to one of main player's cards.
                         if (otherCard1 == mainPlayerCard1.getId() ||
                                 otherCard2 == mainPlayerCard1.getId() ||
                                 otherCard1 == mainPlayerCard2.getId() ||
@@ -71,11 +71,11 @@ public class GeneratePreflopCombos {
                 Card mainPlayerCard2 = new Card(ranks[rank2], mainSuit2);
                 HoleCards mainPlayerCards = new HoleCards(mainPlayerCard1, mainPlayerCard2);
 
-//              Generate the hole cards of the other player.
+                // Generate the hole cards of the other player.
                 for (int otherCard1 = 0; otherCard1 < 52; otherCard1++) {
                     for (int otherCard2 = otherCard1+1; otherCard2 < 52; otherCard2++) {
 
-//                      Skip if any of the other player's cards are identical to one of main player's cards.
+                        // Skip if any of the other player's cards are identical to one of main player's cards.
                         if (otherCard1 == mainPlayerCard1.getId() ||
                                 otherCard2 == mainPlayerCard1.getId() ||
                                 otherCard1 == mainPlayerCard2.getId() ||

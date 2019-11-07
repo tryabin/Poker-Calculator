@@ -17,7 +17,7 @@ public class DeviceDataLoad {
 
     public static CUdeviceptr loadComboDataOntoDevice(List<HoleCardsTwoPlayers> comboList) {
 
-//      Convert the combo list to an array.
+        // Convert the combo list to an array.
         int[] comboListData = new int[comboList.size()*5];
         for (int i = 0; i < comboList.size(); i++) {
             HoleCardsTwoPlayers combo = comboList.get(i);
@@ -28,7 +28,7 @@ public class DeviceDataLoad {
             comboListData[i*5+4] = combo.getUniqueId();
         }
 
-//      Copy the combo data to the device.
+        // Copy the combo data to the device.
         CUdeviceptr comboDataPointer = new CUdeviceptr();
         cuMemAlloc(comboDataPointer, comboListData.length*Sizeof.INT);
         cuMemcpyHtoD(comboDataPointer, Pointer.to(comboListData), comboListData.length*Sizeof.INT);
@@ -44,9 +44,6 @@ public class DeviceDataLoad {
 
         return outcomeTalliesPointer;
     }
-
-
-
 
     public static CUdeviceptr loadBinariesByIdDataOntoDevice() throws IOException, ClassNotFoundException {
         ObjectInputStream in = new ObjectInputStream(new FileInputStream("src/resources/binaries_by_id_data.dat"));

@@ -22,43 +22,43 @@ public class ComputeHandPreFlopEquities {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-//      Enable exceptions and omit all subsequent error checks
+        // Enable exceptions and omit all subsequent error checks
         JCudaDriver.setExceptionsEnabled(true);
 
-//      Initialize the driver and create a context for the first device.
+        // Initialize the driver and create a context for the first device.
         cuInit(0);
         CUdevice device = new CUdevice();
         cuDeviceGet(device, 0);
         CUcontext context = new CUcontext();
         cuCtxCreate(context, 0, device);
 
-//      Build the CUDA source files.
+        // Build the CUDA source files.
         String includeDirectory = "src/cuda/include";
         String moduleFileName = JCudaSamplesUtils.prepareDefaultCubinFile("src/cuda/compute_preflop_equities.cu", "-I", includeDirectory, "-l", "lib-cuda/evaluator7");
 
-//      Load the module file.
+        // Load the module file.
         CUmodule module = new CUmodule();
         cuModuleLoad(module, moduleFileName);
 
-//      Obtain a function pointer to the global function.
+        // Obtain a function pointer to the global function.
         CUfunction function = new CUfunction();
         cuModuleGetFunction(function, module, "compute_preflop_equities");
 
 
-//      Load all needed data onto the device.
-//      Combo data
-//        int comboListLength = 1 << 11;
+        // Load all needed data onto the device.
+        // Combo data
+        // int comboListLength = 1 << 11;
         List<HoleCardsTwoPlayers> comboList = GeneratePreflopCombos.generateHoleCardCombos();
-//        comboList = comboList.subList(0, comboListLength);
+        // comboList = comboList.subList(0, comboListLength);
 
         System.out.println("Number of combos = " + comboList.size());
 
         CUdeviceptr comboDataPointer = DeviceDataLoad.loadComboDataOntoDevice(comboList);
 
-//      Outcome tallies data
+        // Allocate memory on the device to store the result tallies.
         CUdeviceptr outcomeTalliesPointer = DeviceDataLoad.loadOutcomeTalliesDataOntoDevice(comboList.size());
 
-//      Hash tables for hand evaluation
+        // Load the hash tables used for hand evaluation.
         CUdeviceptr binariesByIdPointer = DeviceDataLoad.loadBinariesByIdDataOntoDevice();
         CUdeviceptr suitBitByIdPointer = DeviceDataLoad.loadSuitBitByIdDataOntoDevice();
         CUdeviceptr flushPointer = DeviceDataLoad.loadFlushDataOntoDevice();
@@ -66,14 +66,14 @@ public class ComputeHandPreFlopEquities {
         CUdeviceptr suitsPointer = DeviceDataLoad.loadSuitsDataOntoDevice();
         CUdeviceptr dpPointer = DeviceDataLoad.loadDpDataOntoDevice();
 
-//      Configure the cache settings.
+        // Configure the cache settings.
         cudaDeviceSetCacheConfig(CUfunc_cache.CU_FUNC_CACHE_PREFER_L1);
-//        cudaDeviceSetCacheConfig(CUfunc_cache.CU_FUNC_CACHE_PREFER_SHARED);
-//        cudaDeviceSetCacheConfig(CUfunc_cache.CU_FUNC_CACHE_PREFER_EQUAL);
-//        cudaDeviceSetCacheConfig(CUfunc_cache.CU_FUNC_CACHE_PREFER_NONE);
+        // cudaDeviceSetCacheConfig(CUfunc_cache.CU_FUNC_CACHE_PREFER_SHARED);
+        // cudaDeviceSetCacheConfig(CUfunc_cache.CU_FUNC_CACHE_PREFER_EQUAL);
+        // cudaDeviceSetCacheConfig(CUfunc_cache.CU_FUNC_CACHE_PREFER_NONE);
 
 
-//      Set up the kernel parameters.
+        // Set up the kernel parameters.
         Pointer kernelParameters = Pointer.to(
                 Pointer.to(comboDataPointer),
                 Pointer.to(outcomeTalliesPointer),
@@ -87,7 +87,7 @@ public class ComputeHandPreFlopEquities {
         );
 
 
-//      Call the kernel function.
+        // Call the kernel function.
         long startTime = System.nanoTime();
 
         int numberOfThreadsPerBlock = 512;
@@ -101,7 +101,7 @@ public class ComputeHandPreFlopEquities {
         );
         cuCtxSynchronize();
 
-//      Copy the outcome tallies from the device to the host.
+        // Copy the outcome tallies from the device to the host.
         int[] outcomeTallies = new int[comboList.size()*3];
         cuMemcpyDtoH(Pointer.to(outcomeTallies), outcomeTalliesPointer, outcomeTallies.length*Sizeof.INT);
 
@@ -109,8 +109,7 @@ public class ComputeHandPreFlopEquities {
         System.out.println("Kernel execution time in seconds : " + (endTime - startTime) / 1e9);
 
 
-
-//      Create a map between each combo and the number of wins, losses, and ties for that combo.
+        // Create a map between each combo and the number of wins, losses, and ties for that combo.
         Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies = new HashMap<>();
         for (int i = 0; i < comboList.size(); i++) {
             int wins = outcomeTallies[i*3 + 0];
@@ -122,7 +121,7 @@ public class ComputeHandPreFlopEquities {
             holeCardComboTallies.put(combo, curTallies);
         }
 
-//      Output the map to a file.
+        // Output the map to a file.
         String holeCardTalliesMapFile = "holeCardComboTallies.dat";
         ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(holeCardTalliesMapFile)));
         out.writeObject(holeCardComboTallies);

@@ -1,9 +1,9 @@
-package data_creation.structures;
+package analysis.structures;
 
 public class HoleCardsVersusRangeResult {
 
-    double equity;
-    int numberOfHandsInRange;
+    private double equity;
+    private int numberOfHandsInRange;
 
     public HoleCardsVersusRangeResult(double equity, int numberOfHandsInRange) {
         this.equity = equity;
