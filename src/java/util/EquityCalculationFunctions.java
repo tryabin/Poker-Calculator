@@ -11,9 +11,7 @@ import java.util.Map;
 
 public class EquityCalculationFunctions {
 
-    public static HoleCardsVersusRangeResult getEquityOfHoleCardsVersusRange(Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies,
-                                                                             List<HoleCards> range,
-                                                                             HoleCards holeCards) {
+    public static HoleCardsVersusRangeResult getEquityOfHoleCardsVersusRange(HoleCards holeCards, List<HoleCards> range, Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies) {
 
         // Convert the hole cards to the version used in generating the combos.
         holeCards = convertHoleCardsToKeyVersion(holeCards);
@@ -65,9 +63,9 @@ public class EquityCalculationFunctions {
 
 
     public static int getTotalNumberOfHands(Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies,
-                                            List<HoleCards> holeCardsAgainstRandomHand,
-                                            HoleCards holeCards) {
-        return getEquityOfHoleCardsVersusRange(holeCardComboTallies, holeCardsAgainstRandomHand, holeCards).getNumberOfHandsInRange();
+                                               List<HoleCards> entireRange,
+                                               HoleCards holeCards) {
+        return getEquityOfHoleCardsVersusRange(holeCards, entireRange, holeCardComboTallies).getNumberOfHandsInRange();
     }
 
 
@@ -107,21 +105,46 @@ public class EquityCalculationFunctions {
     }
 
 
-    public static double computeWinPercentageFromHoleCardsVersusRangeResult(double startingStackBB,
-                                                                            double startingStackOpponentBB,
-                                                                            Position playerPosition,
-                                                                            double totalNumberOfHandsAgainstHoleCards,
-                                                                            HoleCardsVersusRangeResult result) {
+    public static double computeAverageStackAfterHandFromHoleCardsVersusRangeResult(double startingStackSB,
+                                                                                    double startingStackBB,
+                                                                                    Position playerPosition,
+                                                                                    int totalNumberOfHandsAgainstHoleCards,
+                                                                                    HoleCardsVersusRangeResult result,
+                                                                                    double playPercentage) {
 
-        double allInPot = startingStackBB < startingStackOpponentBB ? 2*startingStackBB : 2*startingStackOpponentBB;
-        double stackAfterAllIn = startingStackBB - allInPot/2;
+         // Starting stacks
+        double startingStackPlayer = playerPosition == Position.SB ? startingStackSB : startingStackBB;
+        double startingStackOpponent = playerPosition == Position.BB ? startingStackBB : startingStackSB;
+
+        // Blinds
         double blindWonIfOpponentFolds = playerPosition == Position.SB ? 1 : .5;
+        double blindLostIfPlayerFolds = playerPosition == Position.SB ? .5 : 1;
+
+        // Pot and stack if all-in
+        double allInPot = startingStackPlayer < startingStackOpponent ? 2*startingStackPlayer : 2*startingStackOpponent;
+        double stackAfterAllIn = startingStackPlayer - allInPot/2;
 
         double equityAgainstRange = result.getEquity();
-        double callPercentage = result.getNumberOfHandsInRange()/totalNumberOfHandsAgainstHoleCards;
-        double averageStackAfterHand = stackAfterAllIn + allInPot*equityAgainstRange*callPercentage + (1 - callPercentage)*(blindWonIfOpponentFolds + allInPot/2);
-        double averageOpponentStackAfterHand = startingStackOpponentBB - (averageStackAfterHand - startingStackBB);
+        double opponentAllInPercentage = result.getNumberOfHandsInRange()/(double)totalNumberOfHandsAgainstHoleCards;
 
-        return averageStackAfterHand/(averageStackAfterHand + averageOpponentStackAfterHand);
+        // Stack sizes depending on what happens
+        double averageStackAfterHandIfGoAllIn = stackAfterAllIn + allInPot*equityAgainstRange;
+        double stackIfFold = startingStackPlayer - blindLostIfPlayerFolds;
+        double stackIfOpponentFolds = startingStackPlayer + blindWonIfOpponentFolds;
+
+        // Compute stack sizes depending on position
+        double averageStackAfterHand;
+        if (playerPosition == Position.SB) {
+            averageStackAfterHand = averageStackAfterHandIfGoAllIn*playPercentage*opponentAllInPercentage +
+                                    stackIfFold*(1 - playPercentage) +
+                                    stackIfOpponentFolds*playPercentage*(1 - opponentAllInPercentage);
+        }
+        else {
+            averageStackAfterHand = averageStackAfterHandIfGoAllIn*playPercentage*opponentAllInPercentage +
+                                    stackIfFold*(1 - playPercentage)*opponentAllInPercentage +
+                                    stackIfOpponentFolds*(1 - opponentAllInPercentage);
+        }
+
+        return averageStackAfterHand;
     }
 }

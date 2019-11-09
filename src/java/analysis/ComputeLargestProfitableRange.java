@@ -1,21 +1,17 @@
 package analysis;
 
+import analysis.structures.HoleCardsVersusRangeResult;
 import analysis.structures.Position;
 import data_creation.structures.HoleCards;
 import data_creation.structures.HoleCardsTwoPlayers;
-import analysis.structures.HoleCardsVersusRangeResult;
 import data_creation.structures.OutcomeTallies;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
-import static util.EquityCalculationFunctions.computeWinPercentageFromHoleCardsVersusRangeResult;
 import static util.EquityCalculationFunctions.*;
 
 
@@ -24,8 +20,8 @@ public class ComputeLargestProfitableRange {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         // Parameters
-        double startingStackBB = 5;
-        double startingStackOpponentBB = 5;
+        double startingStackSB = 10;
+        double startingStackBB = 10;
         Position playerPosition = Position.SB;
 
 
@@ -42,56 +38,99 @@ public class ComputeLargestProfitableRange {
 
         // Sort the hole card tallies map based on the equity of the hole cards against a random hand.
         holeCardTallies = sortByValue(holeCardTallies);
-        List<HoleCards> holeCardsAgainstRandomHand = new ArrayList<>(holeCardTallies.keySet());
-
-
+        List<HoleCards> entireRange = new ArrayList<>(holeCardTallies.keySet());
 
         // Run iterations computing a new best range against the current best range until convergence.
         long start = System.nanoTime();
 
-        List<HoleCards> curBestRange = new ArrayList<>(holeCardsAgainstRandomHand);
-        int previousSizeOfBestRange = curBestRange.size();
-        int newSizeOfBestRange = 0;
-        while(previousSizeOfBestRange != newSizeOfBestRange) {
+        // Construct initial ranges for the player and opponent.
+        List<HoleCards> curBestRangePlayer = entireRange;
+        List<HoleCards> curBestRangeOpponent = entireRange;
 
-            previousSizeOfBestRange = newSizeOfBestRange;
+        // Continuously find the best ranges against the current best ranges for the player and opponent until
+        // the range for the player converges.
+        int iterationsToConverge = 15;
+        int maxNumberOfRangesToSave = 10;
+        Position currentPosition = playerPosition;
 
-            // Need to run two inner iterations so we can switch the player position back to their original position.
+        // There could be multiple best ranges so we save all of them.
+        Set<List<HoleCards>> bestRanges = new HashSet<>();
+        for (int i = 0; i < iterationsToConverge + maxNumberOfRangesToSave; i++) {
+
+            // Need to run two inner iterations so we can switch the player position to the other position
+            // and then back to their original position.
             for (int j = 0; j < 2; j++) {
-                // Find all the hands that you can go all-in on that would still increase your chances of winning against the previously found range.
+
                 List<HoleCards> newBestRange = new ArrayList<>();
 
-                // Switch the player position since the previous range was computed for the player, and now we want the opponent
-                // to have that range so we put them in the player's previous position.
-                playerPosition = playerPosition == Position.SB ? Position.BB : Position.SB;
-                double blindLostIfYouFold = playerPosition == Position.SB ? .5 : 1;
-                double temp = startingStackBB;
-                startingStackBB = startingStackOpponentBB;
-                startingStackOpponentBB = temp;
+                // Switch the current position since the previous range was computed for the other position.
+                currentPosition = currentPosition == Position.SB ? Position.BB : Position.SB;
 
-                for (HoleCards holeCards : holeCardsAgainstRandomHand) {
-                    int totalNumberOfHandsAgainstHoleCards = getTotalNumberOfHands(holeCardComboTallies, holeCardsAgainstRandomHand, holeCards);
-                    HoleCardsVersusRangeResult result = getEquityOfHoleCardsVersusRange(holeCardComboTallies, curBestRange, holeCards);
-                    double winPercentage = computeWinPercentageFromHoleCardsVersusRangeResult(startingStackBB, startingStackOpponentBB, playerPosition, totalNumberOfHandsAgainstHoleCards, result);
-                    double winPercentageIncrease = winPercentage - (startingStackBB - blindLostIfYouFold)/(startingStackBB + startingStackOpponentBB);
-                    if (winPercentageIncrease > 0) {
+                // Find all the hands where going all-in is better than folding against the previously found range.
+                for (HoleCards holeCards : entireRange) {
+
+                    // Compute the total number of hands that can be played agains the current hole cards.
+                    int totalNumberOfHandsAgainstHoleCards = getTotalNumberOfHands(holeCardComboTallies, entireRange, holeCards);
+
+                    // Compare the current hole cards against the current best range for the other position.
+                    HoleCardsVersusRangeResult result;
+                    if (currentPosition == playerPosition) {
+                        result = getEquityOfHoleCardsVersusRange(holeCards, curBestRangeOpponent, holeCardComboTallies);
+                    }
+                    else {
+                        result = getEquityOfHoleCardsVersusRange(holeCards, curBestRangePlayer, holeCardComboTallies);
+                    }
+
+                    // See if it is better to fold or go all-in for the current hand.
+                    double stackSizeIfGoAllIn = computeAverageStackAfterHandFromHoleCardsVersusRangeResult(startingStackSB,
+                                                                                                           startingStackBB,
+                                                                                                           currentPosition,
+                                                                                                           totalNumberOfHandsAgainstHoleCards,
+                                                                                                           result,
+                                                                                                           1);
+
+                    double stackSizeIfFold = computeAverageStackAfterHandFromHoleCardsVersusRangeResult(startingStackSB,
+                                                                                                        startingStackBB,
+                                                                                                        currentPosition,
+                                                                                                        totalNumberOfHandsAgainstHoleCards,
+                                                                                                        result,
+                                                                                                        0);
+
+
+                    // Add a range element if the optimal play percentage for the current hole card is greater than 0.
+                    if (stackSizeIfGoAllIn > stackSizeIfFold) {
                         newBestRange.add(holeCards);
                     }
                 }
 
-                curBestRange = newBestRange;
+                // Set the new best range for the current position.
+                if (currentPosition == playerPosition) {
+                    curBestRangePlayer = newBestRange;
+                }
+                else {
+                    curBestRangeOpponent = newBestRange;
+                }
             }
 
-            newSizeOfBestRange = curBestRange.size();
-
-            System.out.println("curBestRange size = " + curBestRange.size());
+            // Finish early if we have converged on a range for the main player.
+            if (i >= iterationsToConverge) {
+                if (bestRanges.contains(curBestRangePlayer)) {
+                    break;
+                }
+                bestRanges.add(curBestRangePlayer);
+            }
         }
 
 
         long end = System.nanoTime();
 
+        double playerStartingStack = playerPosition == Position.SB ? startingStackSB : startingStackBB;
+        double opponentStartingStack = playerPosition == Position.SB ? startingStackBB : startingStackSB;
+
         System.out.println("time to compute largest profitable range = " + (end - start)/1e9);
-        System.out.println("Range where it's better to go all-in than to fold in the " + playerPosition + " position when your stack is " + startingStackBB + " and your opponent's stack is " + startingStackOpponentBB + " = ");
-        System.out.println(curBestRange.size() + " total hands : " + Arrays.toString(curBestRange.toArray()));
+        System.out.println("Ranges where it's better to go all-in than to fold in the " + playerPosition + " position when your stack is " + playerStartingStack + " and your opponent's stack is " + opponentStartingStack + " = ");
+        for (List<HoleCards> curRange : bestRanges) {
+            System.out.println(curRange.size() + " total hands : " + Arrays.toString(curRange.toArray()));
+        }
     }
 }
