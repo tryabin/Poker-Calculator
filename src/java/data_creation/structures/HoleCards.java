@@ -3,7 +3,13 @@ package data_creation.structures;
 import java.io.Serializable;
 import java.util.Objects;
 
+import static java.lang.Integer.max;
+import static java.lang.Integer.min;
+
 public final class HoleCards implements Serializable {
+
+    private static final long serialVersionUID = -6064265357020050887L;
+
     private Card card1;
     private Card card2;
 
@@ -44,6 +50,13 @@ public final class HoleCards implements Serializable {
                 card2.equals(otherHoleCards.getCard1()) ||
                 card2.equals(otherHoleCards.getCard2());
     }
+
+    public String toRankAndTypeString() {
+        Rank highestRank = Rank.values()[max(card1.getRank().ordinal(), card2.getRank().ordinal())];
+        Rank lowestRank = Rank.values()[min(card1.getRank().ordinal(), card2.getRank().ordinal())];
+        return highestRank.toString() + lowestRank.toString() + this.getType().toString();
+    }
+
 
     @Override
     public String toString() {

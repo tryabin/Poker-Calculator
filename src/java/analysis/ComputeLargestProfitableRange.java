@@ -2,9 +2,7 @@ package analysis;
 
 import analysis.structures.HoleCardsVersusRangeResult;
 import analysis.structures.Position;
-import data_creation.structures.HoleCards;
-import data_creation.structures.HoleCardsTwoPlayers;
-import data_creation.structures.OutcomeTallies;
+import data_creation.structures.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,12 +18,11 @@ public class ComputeLargestProfitableRange {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         // Parameters
-        double startingStackSB = 10;
-        double startingStackBB = 10;
+        double startingStackSB = 5;
+        double startingStackBB = 2;
         Position playerPosition = Position.SB;
 
-
-        // Load the pre-flop tallies against a random hand.
+         // Load the pre-flop tallies against a random hand.
         String holeCardTalliesFile = "holeCardTallies.dat";
         ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(holeCardTalliesFile)));
         Map<HoleCards, OutcomeTallies> holeCardTallies = (Map<HoleCards, OutcomeTallies>) in.readObject();
@@ -38,14 +35,36 @@ public class ComputeLargestProfitableRange {
 
         // Sort the hole card tallies map based on the equity of the hole cards against a random hand.
         holeCardTallies = sortByValue(holeCardTallies);
-        List<HoleCards> entireRange = new ArrayList<>(holeCardTallies.keySet());
+        Set<HoleCards> entireRange = new HashSet<>(holeCardTallies.keySet());
+
+        // Get a map of the most profitable ranges for all hole cards.
+        List<Set<HoleCards>> profitableRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
+
+        // Find the best ranges for some test hole cards.
+        HoleCards holeCardsToFindBestRangesFor = new HoleCards(new Card(Rank.KING, Suit.SPADES), new Card(Rank.TEN, Suit.CLUBS));
+        holeCardsToFindBestRangesFor = convertHoleCardsToKeyVersion(holeCardsToFindBestRangesFor);
+
+        double playerStartingStack = playerPosition == Position.SB ? startingStackSB : startingStackBB;
+        double opponentStartingStack = playerPosition == Position.SB ? startingStackBB : startingStackSB;
+        System.out.println("Ranges where it's better to go all-in than to fold with " + holeCardsToFindBestRangesFor.toRankAndTypeString() + " in the " + playerPosition + " position when your stack is " + playerStartingStack + " and your opponent's stack is " + opponentStartingStack + " = ");
+        for (Set<HoleCards> range : profitableRanges) {
+            String holeCardsPresentInRange = range.contains(holeCardsToFindBestRangesFor) ? "Yes" : "No";
+            System.out.println(holeCardsPresentInRange + ", " + range.size());
+        }
+    }
+
+
+    public static List<Set<HoleCards>> getProfitableRanges(double startingStackSB, double startingStackBB,
+                                                           Position playerPosition,
+                                                           Set<HoleCards> entireRange,
+                                                           Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies) {
 
         // Run iterations computing a new best range against the current best range until convergence.
         long start = System.nanoTime();
 
         // Construct initial ranges for the player and opponent.
-        List<HoleCards> curBestRangePlayer = entireRange;
-        List<HoleCards> curBestRangeOpponent = entireRange;
+        Set<HoleCards> curBestRangePlayer = entireRange;
+        Set<HoleCards> curBestRangeOpponent = entireRange;
 
         // Continuously find the best ranges against the current best ranges for the player and opponent until
         // the range for the player converges.
@@ -54,14 +73,14 @@ public class ComputeLargestProfitableRange {
         Position currentPosition = playerPosition;
 
         // There could be multiple best ranges so we save all of them.
-        Set<List<HoleCards>> bestRanges = new HashSet<>();
+        List<Set<HoleCards>> bestRanges = new ArrayList<>();
         for (int i = 0; i < iterationsToConverge + maxNumberOfRangesToSave; i++) {
 
             // Need to run two inner iterations so we can switch the player position to the other position
             // and then back to their original position.
             for (int j = 0; j < 2; j++) {
 
-                List<HoleCards> newBestRange = new ArrayList<>();
+                Set<HoleCards> newBestRange = new HashSet<>();
 
                 // Switch the current position since the previous range was computed for the other position.
                 currentPosition = currentPosition == Position.SB ? Position.BB : Position.SB;
@@ -69,7 +88,7 @@ public class ComputeLargestProfitableRange {
                 // Find all the hands where going all-in is better than folding against the previously found range.
                 for (HoleCards holeCards : entireRange) {
 
-                    // Compute the total number of hands that can be played agains the current hole cards.
+                    // Compute the total number of hands that can be played against the current hole cards.
                     int totalNumberOfHandsAgainstHoleCards = getTotalNumberOfHands(holeCardComboTallies, entireRange, holeCards);
 
                     // Compare the current hole cards against the current best range for the other position.
@@ -124,13 +143,27 @@ public class ComputeLargestProfitableRange {
 
         long end = System.nanoTime();
 
-        double playerStartingStack = playerPosition == Position.SB ? startingStackSB : startingStackBB;
-        double opponentStartingStack = playerPosition == Position.SB ? startingStackBB : startingStackSB;
+        // double playerStartingStack = playerPosition == Position.SB ? startingStackSB : startingStackBB;
+        // double opponentStartingStack = playerPosition == Position.SB ? startingStackBB : startingStackSB;
+        // System.out.println("time to compute largest profitable range = " + (end - start)/1e9);
+        // System.out.println("Ranges where it's better to go all-in than to fold in the " + playerPosition + " position when your stack is " + playerStartingStack + " and your opponent's stack is " + opponentStartingStack + " = ");
+        // for (Set<HoleCards> curRange : bestRanges) {
+        //     System.out.println(curRange.size() + " total hands : " + Arrays.toString(curRange.toArray()));
+        // }
 
-        System.out.println("time to compute largest profitable range = " + (end - start)/1e9);
-        System.out.println("Ranges where it's better to go all-in than to fold in the " + playerPosition + " position when your stack is " + playerStartingStack + " and your opponent's stack is " + opponentStartingStack + " = ");
-        for (List<HoleCards> curRange : bestRanges) {
-            System.out.println(curRange.size() + " total hands : " + Arrays.toString(curRange.toArray()));
-        }
+        // Return a map between every hole card and a list of profitable ranges they occur in.
+        // Map<HoleCards, List<Set<HoleCards>>> holeCardsToProfitableRangeMap = new HashMap<>();
+        // for (HoleCards holeCards : entireRange) {
+        //     for (Set<HoleCards> range : bestRanges) {
+        //         if (range.contains(holeCards)) {
+        //             if (!holeCardsToProfitableRangeMap.containsKey(holeCards)) {
+        //                 holeCardsToProfitableRangeMap.put(holeCards, new ArrayList<>());
+        //             }
+        //             holeCardsToProfitableRangeMap.get(holeCards).add(range);
+        //         }
+        //     }
+        // }
+
+        return bestRanges;
     }
 }

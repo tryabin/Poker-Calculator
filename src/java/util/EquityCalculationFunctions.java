@@ -4,14 +4,11 @@ import analysis.structures.HoleCardsVersusRangeResult;
 import analysis.structures.Position;
 import data_creation.structures.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EquityCalculationFunctions {
 
-    public static HoleCardsVersusRangeResult getEquityOfHoleCardsVersusRange(HoleCards holeCards, List<HoleCards> range, Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies) {
+    public static HoleCardsVersusRangeResult getEquityOfHoleCardsVersusRange(HoleCards holeCards, Set<HoleCards> range, Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies) {
 
         // Convert the hole cards to the version used in generating the combos.
         holeCards = convertHoleCardsToKeyVersion(holeCards);
@@ -63,13 +60,13 @@ public class EquityCalculationFunctions {
 
 
     public static int getTotalNumberOfHands(Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies,
-                                               List<HoleCards> entireRange,
+                                               Set<HoleCards> entireRange,
                                                HoleCards holeCards) {
         return getEquityOfHoleCardsVersusRange(holeCards, entireRange, holeCardComboTallies).getNumberOfHandsInRange();
     }
 
 
-    private static HoleCards convertHoleCardsToKeyVersion(HoleCards holeCards) {
+    public static HoleCards convertHoleCardsToKeyVersion(HoleCards holeCards) {
 
         // Make sure the rank of the first card is less than or equal to the rank of the second card, because that is how
         // the combos were generated.
@@ -114,7 +111,7 @@ public class EquityCalculationFunctions {
 
          // Starting stacks
         double startingStackPlayer = playerPosition == Position.SB ? startingStackSB : startingStackBB;
-        double startingStackOpponent = playerPosition == Position.BB ? startingStackBB : startingStackSB;
+        double startingStackOpponent = playerPosition == Position.SB ? startingStackBB : startingStackSB;
 
         // Blinds
         double blindWonIfOpponentFolds = playerPosition == Position.SB ? 1 : .5;
