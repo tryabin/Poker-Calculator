@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import static java.lang.Integer.max;
 import static java.lang.Integer.min;
+import static util.EquityCalculationFunctions.convertHoleCardsToKeyVersion;
 
 public final class HoleCards implements Serializable {
 
@@ -55,6 +56,35 @@ public final class HoleCards implements Serializable {
         Rank highestRank = Rank.values()[max(card1.getRank().ordinal(), card2.getRank().ordinal())];
         Rank lowestRank = Rank.values()[min(card1.getRank().ordinal(), card2.getRank().ordinal())];
         return highestRank.toString() + lowestRank.toString() + this.getType().toString();
+    }
+
+    // Converts a string representing hole cards into a HoleCards object. Example "KTo" equals King-Ten Offsuit.
+    public static HoleCards fromRankAndTypeString(String holeCardsString) {
+
+        if (holeCardsString.length() < 2) {
+            throw new IllegalArgumentException("Hole cards string length must be 2 or greater.");
+        }
+
+        Rank rank1 = Rank.get(holeCardsString.substring(0, 1));
+        Rank rank2 = Rank.get(holeCardsString.substring(1, 2));
+
+        if (rank1 != rank2 && holeCardsString.length() == 2) {
+            throw new IllegalArgumentException("Unpaired hands must be specified as either suited or unsuited.");
+        }
+
+        HoleCards holeCards;
+        if (rank1 == rank2) {
+            holeCards = new HoleCards(new Card(rank1, Suit.CLUBS), new Card(rank2, Suit.DIAMONDS));
+
+        }
+        else {
+            HoleCardsType type = HoleCardsType.get(holeCardsString.substring(2, 3));
+            holeCards = type == HoleCardsType.OFFSUIT ? new HoleCards(new Card(rank1, Suit.CLUBS), new Card(rank2, Suit.DIAMONDS)) :
+                                                        new HoleCards(new Card(rank1, Suit.CLUBS), new Card(rank2, Suit.CLUBS));
+        }
+        holeCards = convertHoleCardsToKeyVersion(holeCards);
+
+        return holeCards;
     }
 
 

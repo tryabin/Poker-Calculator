@@ -140,29 +140,7 @@ public class ComputeLargestProfitableRange {
             }
         }
 
-
         long end = System.nanoTime();
-
-        // double playerStartingStack = playerPosition == Position.SB ? startingStackSB : startingStackBB;
-        // double opponentStartingStack = playerPosition == Position.SB ? startingStackBB : startingStackSB;
-        // System.out.println("time to compute largest profitable range = " + (end - start)/1e9);
-        // System.out.println("Ranges where it's better to go all-in than to fold in the " + playerPosition + " position when your stack is " + playerStartingStack + " and your opponent's stack is " + opponentStartingStack + " = ");
-        // for (Set<HoleCards> curRange : bestRanges) {
-        //     System.out.println(curRange.size() + " total hands : " + Arrays.toString(curRange.toArray()));
-        // }
-
-        // Return a map between every hole card and a list of profitable ranges they occur in.
-        // Map<HoleCards, List<Set<HoleCards>>> holeCardsToProfitableRangeMap = new HashMap<>();
-        // for (HoleCards holeCards : entireRange) {
-        //     for (Set<HoleCards> range : bestRanges) {
-        //         if (range.contains(holeCards)) {
-        //             if (!holeCardsToProfitableRangeMap.containsKey(holeCards)) {
-        //                 holeCardsToProfitableRangeMap.put(holeCards, new ArrayList<>());
-        //             }
-        //             holeCardsToProfitableRangeMap.get(holeCards).add(range);
-        //         }
-        //     }
-        // }
 
         return bestRanges;
     }

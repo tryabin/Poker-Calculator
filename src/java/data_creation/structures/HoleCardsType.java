@@ -2,6 +2,7 @@ package data_creation.structures;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public enum HoleCardsType {
@@ -14,9 +15,9 @@ public enum HoleCardsType {
     private static final Map<String, HoleCardsType> ENUM_MAP;
 
     static {
-        Map<String, HoleCardsType> map = new ConcurrentHashMap<String, HoleCardsType>();
+        Map<String, HoleCardsType> map = new ConcurrentHashMap<>();
         for (HoleCardsType instance : HoleCardsType.values()) {
-            map.put(instance.toString().toLowerCase(), instance);
+            map.put(instance.toString(), instance);
         }
         ENUM_MAP = Collections.unmodifiableMap(map);
     }
@@ -32,6 +33,10 @@ public enum HoleCardsType {
     }
 
     public static HoleCardsType get(String name) {
-        return ENUM_MAP.get(name.toLowerCase());
+        return ENUM_MAP.get(name);
+    }
+
+    public static Set<String> getAbbreviations() {
+        return ENUM_MAP.keySet();
     }
 }

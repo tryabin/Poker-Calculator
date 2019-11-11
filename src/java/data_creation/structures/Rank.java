@@ -2,6 +2,7 @@ package data_creation.structures;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public enum Rank {
@@ -24,9 +25,9 @@ public enum Rank {
     private static final Map<String, Rank> ENUM_MAP;
 
     static {
-        Map<String, Rank> map = new ConcurrentHashMap<String, Rank>();
+        Map<String, Rank> map = new ConcurrentHashMap<>();
         for (Rank instance : Rank.values()) {
-            map.put(instance.toString().toLowerCase(), instance);
+            map.put(instance.toString(), instance);
         }
         ENUM_MAP = Collections.unmodifiableMap(map);
     }
@@ -42,6 +43,10 @@ public enum Rank {
     }
 
     public static Rank get(String name) {
-        return ENUM_MAP.get(name.toLowerCase());
+        return ENUM_MAP.get(name);
+    }
+
+    public static Set<String> getAbbreviations() {
+        return ENUM_MAP.keySet();
     }
 }
