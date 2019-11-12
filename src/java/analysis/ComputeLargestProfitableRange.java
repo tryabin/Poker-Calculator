@@ -38,7 +38,7 @@ public class ComputeLargestProfitableRange {
         Set<HoleCards> entireRange = new HashSet<>(holeCardTallies.keySet());
 
         // Get a map of the most profitable ranges for all hole cards.
-        List<Set<HoleCards>> profitableRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
+        List<List<Set<HoleCards>>> bestRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
 
         // Find the best ranges for some test hole cards.
         HoleCards holeCardsToFindBestRangesFor = new HoleCards(new Card(Rank.KING, Suit.SPADES), new Card(Rank.TEN, Suit.CLUBS));
@@ -47,17 +47,21 @@ public class ComputeLargestProfitableRange {
         double playerStartingStack = playerPosition == Position.SB ? startingStackSB : startingStackBB;
         double opponentStartingStack = playerPosition == Position.SB ? startingStackBB : startingStackSB;
         System.out.println("Ranges where it's better to go all-in than to fold with " + holeCardsToFindBestRangesFor.toRankAndTypeString() + " in the " + playerPosition + " position when your stack is " + playerStartingStack + " and your opponent's stack is " + opponentStartingStack + " = ");
-        for (Set<HoleCards> range : profitableRanges) {
-            String holeCardsPresentInRange = range.contains(holeCardsToFindBestRangesFor) ? "Yes" : "No";
-            System.out.println(holeCardsPresentInRange + ", " + range.size());
+        for (int i = 0; i < bestRanges.get(0).size(); i++) {
+            Set<HoleCards> playerRange = bestRanges.get(0).get(i);
+            Set<HoleCards> opponentRange = bestRanges.get(1).get(i);
+            String holeCardsPresentInRange = playerRange.contains(holeCardsToFindBestRangesFor) ? "Yes" : "No";
+            System.out.println(holeCardsPresentInRange +
+                               ", player range size = " + playerRange.size() +
+                               ", opponent range size = " + opponentRange.size());
         }
     }
 
 
-    public static List<Set<HoleCards>> getProfitableRanges(double startingStackSB, double startingStackBB,
-                                                           Position playerPosition,
-                                                           Set<HoleCards> entireRange,
-                                                           Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies) {
+    public static List<List<Set<HoleCards>>> getProfitableRanges(double startingStackSB, double startingStackBB,
+                                                                 Position playerPosition,
+                                                                 Set<HoleCards> entireRange,
+                                                                 Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies) {
 
         // Run iterations computing a new best range against the current best range until convergence.
         long start = System.nanoTime();
@@ -72,8 +76,10 @@ public class ComputeLargestProfitableRange {
         int maxNumberOfRangesToSave = 10;
         Position currentPosition = playerPosition;
 
-        // There could be multiple best ranges so we save all of them.
+        // There could be multiple best ranges so we save all of them, as well as the
+        // best opponent ranges against those ranges.
         List<Set<HoleCards>> bestRanges = new ArrayList<>();
+        List<Set<HoleCards>> bestOpponentRanges = new ArrayList<>();
         for (int i = 0; i < iterationsToConverge + maxNumberOfRangesToSave; i++) {
 
             // Need to run two inner iterations so we can switch the player position to the other position
@@ -137,11 +143,17 @@ public class ComputeLargestProfitableRange {
                     break;
                 }
                 bestRanges.add(curBestRangePlayer);
+                bestOpponentRanges.add(curBestRangeOpponent);
             }
         }
 
         long end = System.nanoTime();
 
-        return bestRanges;
+        // Return the best ranges for the player, and the opponent's best ranges against those ranges.
+        List<List<Set<HoleCards>>> allRanges = new ArrayList<>();
+        allRanges.add(bestRanges);
+        allRanges.add(bestOpponentRanges);
+
+        return allRanges;
     }
 }

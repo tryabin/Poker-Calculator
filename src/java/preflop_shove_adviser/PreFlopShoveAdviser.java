@@ -11,10 +11,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -22,10 +22,7 @@ import javafx.stage.Stage;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 import static analysis.ComputeLargestProfitableRange.getProfitableRanges;
@@ -47,14 +44,16 @@ public class PreFlopShoveAdviser extends Application {
     // The button used to start the calculation.
     private Button calculateButton;
 
-    // The area where the calculation results are shown.
-    private TextArea resultsArea = new TextArea();
+    // The main action column.
+    private VBox resultsColumnLeft;
+    private VBox resultsColumnRight;
 
     // Configure the fonts.
     private Font textFieldFont = new Font(24);
     private Font textFieldDescriptionFont = new Font(14);
     private Font positionButtonFont = new Font(24);
     private Font calculateButtonFont = new Font(24);
+    private Font resultsAreaFont = new Font(24);
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -84,7 +83,7 @@ public class PreFlopShoveAdviser extends Application {
         calculateButton.setOnAction(calculateHandler);
 
 
-        Scene scene = new Scene(grid, 700, 200);
+        Scene scene = new Scene(grid, 700, 400);
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.setTitle("Pre-Flop Shove Adviser");
@@ -123,12 +122,31 @@ public class PreFlopShoveAdviser extends Application {
         HoleCards holeCards = HoleCards.fromRankAndTypeString(holeCardsString);
 
         // Compute the profitable ranges for the given stack sizes.
-        List<Set<HoleCards>> profitableRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
+        List<List<Set<HoleCards>>> bestRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
 
         // Display the results.
-        for (Set<HoleCards> range : profitableRanges) {
-            String holeCardsPresentInRange = range.contains(holeCards) ? "Yes" : "No";
-            System.out.println(holeCardsPresentInRange + ", " + range.size());
+        resultsColumnLeft.getChildren().clear();
+        resultsColumnRight.getChildren().clear();
+
+        for (int i = 0; i < bestRanges.get(0).size(); i++) {
+            Set<HoleCards> playerRange = bestRanges.get(0).get(i);
+            Set<HoleCards> opponentRange = bestRanges.get(1).get(i);
+            String leftString = "player range size = " + playerRange.size();
+            String rightString = "opponent range size = " + opponentRange.size();
+
+            // Set the left text.
+            Text leftResultText = new Text();
+            leftResultText.setFont(resultsAreaFont);
+            leftResultText.setFill(playerRange.contains(holeCards) ? Color.GREEN : Color.RED);
+            leftResultText.setText(leftString);
+            resultsColumnLeft.getChildren().add(leftResultText);
+
+            // Set the right text.
+            Text rightResultText = new Text();
+            rightResultText.setFont(resultsAreaFont);
+            rightResultText.setFill(playerRange.contains(holeCards) ? Color.GREEN : Color.RED);
+            rightResultText.setText(rightString);
+            resultsColumnRight.getChildren().add(rightResultText);
         }
     }
 
@@ -255,12 +273,29 @@ public class PreFlopShoveAdviser extends Application {
         inputRow.getChildren().add(bigBlindChipCountColumn);
         inputRow.getChildren().add(positionColumn);
 
-        // VBox that holds the top row and the calculate button.
+
+        // Configure the results area.
+        resultsColumnLeft = new VBox();
+        resultsColumnLeft.setAlignment(Pos.TOP_LEFT);
+        resultsColumnLeft.setPadding(new Insets(0, 30, 0, 0));
+
+        resultsColumnRight = new VBox();
+        resultsColumnRight.setAlignment(Pos.TOP_LEFT);
+
+        HBox resultsRow = new HBox();
+        resultsRow.getChildren().add(resultsColumnLeft);
+        resultsRow.getChildren().add(resultsColumnRight);
+        resultsRow.setAlignment(Pos.TOP_CENTER);
+        resultsRow.setPadding(new Insets(0, 0, 0, 10));
+
+
+        // VBox that holds the top row, the calculate button, and the results area.
         VBox actionColumn = new VBox();
         actionColumn.setAlignment(Pos.TOP_CENTER);
         actionColumn.setSpacing(10);
         actionColumn.getChildren().add(inputRow);
         actionColumn.getChildren().add(calculateButton);
+        actionColumn.getChildren().add(resultsRow);
 
         // Add the elements to the root node.
         GridPane grid = new GridPane();
