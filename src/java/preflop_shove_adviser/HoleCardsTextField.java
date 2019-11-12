@@ -62,13 +62,6 @@ public class HoleCardsTextField extends TextField {
 
         // Set the text and caret position.
         super.setText(finalText);
-        int textLengthChange = finalText.length() - currentText.length();
-        int caretPositionChange = Math.max(textLengthChange, 0);
-        super.positionCaret(start + caretPositionChange);
-    }
-
-
-    private boolean validate(String text) {
-        return text.matches("[0-9]*");
+        super.positionCaret(start + insertedText.length());
     }
 }
