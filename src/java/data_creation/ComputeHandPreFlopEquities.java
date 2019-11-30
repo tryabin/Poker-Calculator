@@ -47,7 +47,7 @@ public class ComputeHandPreFlopEquities {
 
         // Load all needed data onto the device.
         // Combo data
-        // int comboListLength = 1 << 11;
+        // int comboListLength = (int) 1e5;
         List<HoleCardsTwoPlayers> comboList = GeneratePreflopCombos.generateHoleCardCombos();
         // comboList = comboList.subList(0, comboListLength);
 
@@ -92,7 +92,7 @@ public class ComputeHandPreFlopEquities {
 
         int numberOfThreadsPerBlock = 512;
         int numberOfBlocks = (int)Math.ceil((double)comboList.size() / numberOfThreadsPerBlock);
-        int sharedMemorySize = 0;
+        int sharedMemorySize = 1 << 14;
         cuLaunchKernel(function,
                        numberOfBlocks, 1, 1,              // Number of blocks
                        numberOfThreadsPerBlock, 1, 1,     // Number of threads per block
