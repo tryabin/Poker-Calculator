@@ -83,7 +83,7 @@ public class PreFlopShoveAdviser extends Application {
         calculateButton.setOnAction(calculateHandler);
 
 
-        Scene scene = new Scene(grid, 700, 400);
+        Scene scene = new Scene(grid, 700, 500);
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.setTitle("Pre-Flop Shove Adviser");
