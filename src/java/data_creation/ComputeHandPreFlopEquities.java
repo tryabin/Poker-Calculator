@@ -34,7 +34,7 @@ public class ComputeHandPreFlopEquities {
 
         // Build the CUDA source files.
         String includeDirectory = "src/cuda/include";
-        String moduleFileName = JCudaSamplesUtils.prepareDefaultCubinFile("src/cuda/compute_preflop_equities.cu", "-I", includeDirectory, "-l", "lib-cuda/evaluator7");
+        String moduleFileName = JCudaSamplesUtils.prepareDefaultCubinFile("src/cuda/compute_preflop_equities.cu", "-I", includeDirectory, "-l", "lib-cuda/custom_hand_evaluator");
 
         // Load the module file.
         CUmodule module = new CUmodule();
