@@ -24,8 +24,6 @@ extern "C" __global__ void compute_preflop_equities(int *holeCardCombos, int *ou
         return;
     }
  
-    // int maxEvaluations = 8000;
-    
     // Load data into the shared memory using the first thread in each block.
     extern __shared__ int sharedMemory[];
     int *dp_shared = (int*)&sharedMemory[0];
@@ -74,8 +72,6 @@ extern "C" __global__ void compute_preflop_equities(int *holeCardCombos, int *ou
     usedCards[otherCard2] = true;
     
     
-    // int numEvaluations = 0;
-    
      // Card 1
     for (int card1 = 0; card1 < DECK_SIZE; card1++) { if (!usedCards[card1]) {
 
@@ -117,12 +113,6 @@ extern "C" __global__ void compute_preflop_equities(int *holeCardCombos, int *ou
         else {
             outcomeTallies[threadNumber*3 + 2]++;
         }
-        
-        
-        // numEvaluations++;
-        // if (numEvaluations > maxEvaluations) {
-            // return;
-        // }
 
     }}}}}}}}}}
 }
