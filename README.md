@@ -27,4 +27,7 @@ The `ComputeHandPreFlopEquities` program can be run to reproduce the `holeCardCo
 
 The `CombineTalliesAgainstAllHands` program generates the `holeCardTallies.dat` file, which contains the equities for the 169 uniquely valued hands that can be dealt to a single player.
 
+# Acknowledgements 
+The CUDA code that performs the hand evaluations was adapted from https://github.com/HenryRLee/PokerHandEvaluator. 
+
 
