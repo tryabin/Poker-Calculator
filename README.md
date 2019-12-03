@@ -25,7 +25,7 @@ The `PreFlopShoveAdviser` UI application can be used to determine if it is bette
 # Other Programs
 The `ComputeHandPreFlopEquities` program can be run to reproduce the `holeCardComboTallies.dat` file, which contains the results for every possible combination of cards two players can have. This program uses CUDA to run on the GPU, and may take several minutes to complete. On Windows the TdrDelay registry value may need to be increased so that the CUDA kernel doesn't timeout when doing the computations.
 
-The `CombineTalliesAgainstAllHands` program generates the `holeCardTallies.dat` file, which contains the equities for the 169 uniquely valued hands that can be dealt to a single player.
+The `CombineTalliesAgainstAllHands` program generates the `holeCardTallies.dat` file, which contains the equities against all hands for the 169 uniquely valued hands that can be dealt to a single player.
 
 # Acknowledgements 
 The CUDA code that performs the hand evaluations was adapted from https://github.com/HenryRLee/PokerHandEvaluator. 
