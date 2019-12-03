@@ -19,6 +19,9 @@ The `PreFlopShoveAdviser` UI application can be used to determine if it is bette
 
 
 * The "Hole Cards" field represents your hand, with the last letter being `s` for `suited` or `o` for `off-suit`. For example if your hand is `King of Hearts` and `Ten of Diamonds` then you would enter `KTo` in the "Hole Cards" field.
+* The "My Chip Count" and "Opponent Chip Count" represent the player stacks sizes.
+* The "Big Blind" field represents the number of chips one big blind is worth.
+* The "Position" button represents your current position. It can be clicked to switch to the other position.
 * When the "Calculate" button is pressed the application computes the profitable ranges for the given stack sizes. It then displays the size of those ranges below. Ranges that are colored green indicate that it is better to go all-in than to fold with your hand. There can be multiple profitable ranges, depending on your opponent's range. In the above example it is shown that if the opponent is playing very tight, such that their range is just 5 or 6 hands, then your profitable range is large. However if your opponent is playing looser, then your profitable range is smaller.
 
 # Algorithm to Compute Profitable Ranges
