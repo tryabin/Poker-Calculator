@@ -240,13 +240,13 @@ public class PreFlopShoveAdviser extends Application {
         bigBlindChipCountColumn.getChildren().add(bigBlindChipCountDescription);
 
 
-        // Position buttons.
+        // Position button.
         positionButton = new Button("SB");
         positionButton.setFont(positionButtonFont);
         positionButton.setPrefSize(50, 50);
         positionButton.setPadding(Insets.EMPTY);
 
-        // Position buttons description.
+        // Position button description.
         Text positionDescription = new Text(0, 0, "Position");
         positionDescription.setFont(textFieldDescriptionFont);
 
