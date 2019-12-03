@@ -20,7 +20,7 @@ The `PreFlopShoveAdviser` UI application can be used to determine if it is bette
 1. Both players start with a range that includes all hands. 
 2. A new range is computed for the opponent that includes all hands that are profitable against the player's current range.
 3. A new range is computed for the player that includes all hands that are profitable against the opponent's current range.
-4. Steps 2 and 3 are repeated until the set of ranges between the two players converge. The result is this set of ranges.
+4. Steps 2 and 3 are repeated until the set of ranges between the two players converges. The result is this set of ranges.
 
 # Other Programs
 The `ComputeHandPreFlopEquities` program can be run to reproduce the `holeCardComboTallies.dat` file, which contains the results for every possible combination of cards two players can have. This program uses CUDA to run on the GPU, and may take several minutes to complete. On Windows the TdrDelay registry value may need to be increased so that the CUDA kernel doesn't timeout when doing the computations.
