@@ -4,6 +4,11 @@ A Texas Hold 'em poker calculator. Can compute pre-flop equities for a heads-up 
 # Requirements
 * The CUDA Toolkit and the JCuda libraries are required to run the `ComputeHandPreFlopEquities` program, which calculates the results for every hand combination between two players. 
 * JavaFX and the Commons Lang library are required to run the `PreFlopShoveAdviser` UI application.
+* When running the `PreFlopShoveAdviser` application the following VM arguments are required:
+
+  `--module-path ${PATH_TO_FX} --add-modules javafx.controls,javafx.base`
+
+  where `${PATH_TO_FX}` is the path to where JavaFX is installed.
 
 # Usage
 The `PreFlopShoveAdviser` UI application can be used to determine if it is better to go all-in or to fold in different heads-up scenarios. It assumes players will only fold or go all-in.
