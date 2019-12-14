@@ -5,6 +5,7 @@ import data_creation.structures.HoleCards;
 import data_creation.structures.HoleCardsTwoPlayers;
 import data_creation.structures.OutcomeTallies;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -45,7 +46,7 @@ public class PreFlopShoveAdviser extends Application {
     // The button used to start the calculation.
     private Button calculateButton;
 
-    // The main action column.
+    // The results columns.
     private VBox resultsColumnLeft;
     private VBox resultsColumnRight;
 
@@ -55,6 +56,7 @@ public class PreFlopShoveAdviser extends Application {
     private Font positionButtonFont = new Font(24);
     private Font calculateButtonFont = new Font(24);
     private Font resultsAreaFont = new Font(24);
+
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -68,8 +70,8 @@ public class PreFlopShoveAdviser extends Application {
         // Configure the text fields to switch to the next text field or button when ENTER is pressed.
         configureParameterElementHandlers();
 
-        // Configure the Calculate handler.
-        calculateButton.setOnAction(event -> handleCalculateEvent());
+        // Configure the Calculate button handler.
+        calculateButton.setOnAction(event -> startCalculateTask());
 
         // Configure the window.
         Scene scene = new Scene(grid, 700, 500);
@@ -77,6 +79,53 @@ public class PreFlopShoveAdviser extends Application {
         primaryStage.setResizable(false);
         primaryStage.setTitle("Pre-Flop Shove Adviser");
         primaryStage.show();
+    }
+
+
+    // Computes the best ranges in a background thread and then updates the UI with the results.
+    private void startCalculateTask() {
+
+         Runnable task = () -> {
+
+             // Disable all the input fields and set the text of the Calculate button to "Calculating...".
+             Platform.runLater(this::disableInputFields);
+             Platform.runLater(this::clearResults);
+             Platform.runLater(() -> calculateButton.setText("Calculating..."));
+
+             // Calculate the best ranges.
+             try {
+                 List<List<Set<HoleCards>>> bestRanges = calculateBestRanges();
+                 Platform.runLater(() -> displayBestRanges(bestRanges));
+             }
+             catch (Exception e) {}
+             finally {
+                 Platform.runLater(this::enableInputFields);
+                 Platform.runLater(() -> calculateButton.setText("Calculate"));
+                 Platform.runLater(() -> calculateButton.requestFocus());
+             }
+         };
+
+        Thread backgroundThread = new Thread(task);
+        backgroundThread.setDaemon(true);
+        backgroundThread.start();
+    }
+
+
+    private void disableInputFields() {
+        setInputFieldStatus(true);
+    }
+
+    private void enableInputFields() {
+        setInputFieldStatus(false);
+    }
+
+    private void setInputFieldStatus(boolean status) {
+        holeCardsTextField.setDisable(status);
+        mainPlayerChipCountTextField.setDisable(status);
+        otherPlayerChipCountTextField.setDisable(status);
+        bigBlindChipCountTextField.setDisable(status);
+        positionButton.setDisable(status);
+        calculateButton.setDisable(status);
     }
 
 
@@ -94,14 +143,14 @@ public class PreFlopShoveAdviser extends Application {
     }
 
 
-    private void handleCalculateEvent() {
+    private List<List<Set<HoleCards>>> calculateBestRanges() {
 
         // Parse information from the text boxes.
         double mainPlayerChips = Double.parseDouble(mainPlayerChipCountTextField.getText().replace(",", ""));
         double otherPlayerChips = Double.parseDouble(otherPlayerChipCountTextField.getText().replace(",", ""));
         double bigBlindChips = Double.parseDouble(bigBlindChipCountTextField.getText().replace(",", ""));
         Position playerPosition = Position.valueOf(positionButton.getText());
-        HoleCards holeCards = HoleCards.fromRankAndTypeString(holeCardsTextField.getText());
+
 
         // Convert the chip counts into blind sizes.
         double mainPlayerBB = mainPlayerChips/bigBlindChips;
@@ -112,9 +161,16 @@ public class PreFlopShoveAdviser extends Application {
         // Compute the profitable ranges for the given stack sizes.
         List<List<Set<HoleCards>>> bestRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
 
+        return bestRanges;
+    }
+
+    private void displayBestRanges(List<List<Set<HoleCards>>> bestRanges) {
+
+        //Parse the hole cards.
+        HoleCards holeCards = HoleCards.fromRankAndTypeString(holeCardsTextField.getText());
+
         // Display the results.
-        resultsColumnLeft.getChildren().clear();
-        resultsColumnRight.getChildren().clear();
+        clearResults();
 
         for (int i = 0; i < bestRanges.get(0).size(); i++) {
             Set<HoleCards> playerRange = bestRanges.get(0).get(i);
@@ -136,6 +192,12 @@ public class PreFlopShoveAdviser extends Application {
             rightResultText.setText(rightString);
             resultsColumnRight.getChildren().add(rightResultText);
         }
+    }
+
+
+    private void clearResults() {
+        resultsColumnLeft.getChildren().clear();
+        resultsColumnRight.getChildren().clear();
     }
 
 
