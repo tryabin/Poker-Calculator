@@ -5,8 +5,6 @@ import data_creation.structures.HoleCards;
 import data_creation.structures.HoleCardsTwoPlayers;
 import data_creation.structures.OutcomeTallies;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,7 +20,10 @@ import javafx.stage.Stage;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import static analysis.ComputeLargestProfitableRange.getProfitableRanges;
@@ -64,25 +65,13 @@ public class PreFlopShoveAdviser extends Application {
         // Add all the UI elements.
         GridPane grid = setupUI();
 
-        // Configure the text fields to switch to the next text field when ENTER is pressed, or
-        // compute the best ranges if ENTER is pressed on the last text field.
+        // Configure the text fields to switch to the next text field or button when ENTER is pressed.
         configureParameterElementHandlers();
 
         // Configure the Calculate handler.
-        EventHandler<ActionEvent> calculateHandler = new EventHandler<>()  {
-            public void handle(ActionEvent event) {
-                handleCalculateEvent(Double.parseDouble(mainPlayerChipCountTextField.getText().replace(",", "")),
-                                     Double.parseDouble(otherPlayerChipCountTextField.getText().replace(",", "")),
-                                     Double.parseDouble(bigBlindChipCountTextField.getText().replace(",", "")),
-                                     Position.valueOf(positionButton.getText()),
-                                     entireRange,
-                                     holeCardComboTallies,
-                                     holeCardsTextField.getText());
-            }
-        };
-        calculateButton.setOnAction(calculateHandler);
+        calculateButton.setOnAction(event -> handleCalculateEvent());
 
-
+        // Configure the window.
         Scene scene = new Scene(grid, 700, 500);
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
@@ -105,21 +94,20 @@ public class PreFlopShoveAdviser extends Application {
     }
 
 
+    private void handleCalculateEvent() {
 
-    private void handleCalculateEvent(double mainPlayerChips, double otherPlayerChips, double bigBlindChips,
-                                      Position playerPosition,
-                                      Set<HoleCards> entireRange,
-                                      Map<HoleCardsTwoPlayers, OutcomeTallies> holeCardComboTallies,
-                                      String holeCardsString) {
+        // Parse information from the text boxes.
+        double mainPlayerChips = Double.parseDouble(mainPlayerChipCountTextField.getText().replace(",", ""));
+        double otherPlayerChips = Double.parseDouble(otherPlayerChipCountTextField.getText().replace(",", ""));
+        double bigBlindChips = Double.parseDouble(bigBlindChipCountTextField.getText().replace(",", ""));
+        Position playerPosition = Position.valueOf(positionButton.getText());
+        HoleCards holeCards = HoleCards.fromRankAndTypeString(holeCardsTextField.getText());
 
         // Convert the chip counts into blind sizes.
         double mainPlayerBB = mainPlayerChips/bigBlindChips;
         double otherPlayerBB = otherPlayerChips/bigBlindChips;
         double startingStackSB = playerPosition == Position.SB ? mainPlayerBB : otherPlayerBB;
         double startingStackBB = playerPosition == Position.BB ? mainPlayerBB : otherPlayerBB;
-
-        // Parse the hole cards string.
-        HoleCards holeCards = HoleCards.fromRankAndTypeString(holeCardsString);
 
         // Compute the profitable ranges for the given stack sizes.
         List<List<Set<HoleCards>>> bestRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
