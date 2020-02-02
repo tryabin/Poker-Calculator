@@ -97,7 +97,9 @@ public class PreFlopShoveAdviser extends Application {
                  List<List<Set<HoleCards>>> bestRanges = calculateBestRanges();
                  Platform.runLater(() -> displayBestRanges(bestRanges));
              }
-             catch (Exception e) {}
+             catch (Exception e) {
+                 e.printStackTrace();
+             }
              finally {
                  Platform.runLater(this::enableInputFields);
                  Platform.runLater(() -> calculateButton.setText("Calculate"));
@@ -159,9 +161,8 @@ public class PreFlopShoveAdviser extends Application {
         double startingStackBB = playerPosition == Position.BB ? mainPlayerBB : otherPlayerBB;
 
         // Compute the profitable ranges for the given stack sizes.
-        List<List<Set<HoleCards>>> bestRanges = getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
 
-        return bestRanges;
+        return getProfitableRanges(startingStackSB, startingStackBB, playerPosition, entireRange, holeCardComboTallies);
     }
 
     private void displayBestRanges(List<List<Set<HoleCards>>> bestRanges) {
